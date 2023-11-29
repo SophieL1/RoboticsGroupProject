@@ -66,7 +66,8 @@ def findPath(obs_list, start_pos, robot_dir0, goal_pos, width, verbose=True) :
     
     myGraph = create_graph(myNodes, myEdges, myWeights, verbose=verbose)
     
-    myPath, myCost = dijkstra(myGraph, 0, 8, verbose=False)
+    goal_idx = myNodes[-1][0]
+    myPath, myCost = dijkstra(myGraph, 0, goal_idx, verbose=False)
     if verbose :
         print('Path nodes :', myPath, '\nPath cost :', myCost)
         
