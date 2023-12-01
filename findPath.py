@@ -32,11 +32,11 @@ def findPath(obs_list, start_point, robot_dir0, goal_point, width, width_goal, t
     
     # Plot the map with obstacles
     if verbose :
-        plot_map(obs_list, xLimMap, yLimMap, start=start_pos, goal=goal_pos)
+        plot_map(obs_list, xLimMap, yLimMap, start=start_pos, start_pt=start_point, goal=goal_pos)
         
     # Expand obstacles (ideally by at least half of Thymio robot's width)
     expanded_obs = expand_obstacles(obs_list, width) # expanded_obs is now a list of #obs lists of #verticesofthisobs tuples
-    plot_map(obs_list, xLimMap, yLimMap, True, expanded_obs, start=start_pos, goal=goal_pos)
+    plot_map(obs_list, xLimMap, yLimMap, True, expanded_obs, start=start_pos, start_pt=start_point, goal=goal_pos)
     
     if verbose :
         for obs in range(len(expanded_obs)) :
@@ -66,7 +66,7 @@ def findPath(obs_list, start_point, robot_dir0, goal_point, width, width_goal, t
     
     if verbose :
         plot_map(expanded_obs, xLimMap, yLimMap, larger=False, larger_obs=None, 
-             start=start_pos, goal=goal_pos, 
+             start=start_pos, start_pt=start_point, goal=goal_pos,
              graph=True, graph_edges=myEdges, vertices=myVertices)
     
     myGraph = create_graph(myNodes, myEdges, myWeights, verbose=verbose)

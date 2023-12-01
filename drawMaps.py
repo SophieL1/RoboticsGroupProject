@@ -7,7 +7,7 @@ Created on Fri Nov 17 17:14:19 2023
 import matplotlib.pyplot as plt
 
 
-def plot_map(obstacle_vertices, xAxeLim, yAxeLim ,larger=False, larger_obs=None, start=None, goal=None, graph=False, graph_edges=None, vertices=None):
+def plot_map(obstacle_vertices, xAxeLim, yAxeLim ,larger=False, larger_obs=None, start=None, start_pt=None, goal=None, graph=False, graph_edges=None, vertices=None):
     plt.figure(figsize=(4, 4))
     
     i = 1
@@ -49,8 +49,8 @@ def plot_map(obstacle_vertices, xAxeLim, yAxeLim ,larger=False, larger_obs=None,
         # Close the start position shape by adding the first vertex at the end
         x_start.append(start[0][0])
         y_start.append(start[0][1])
-        x_start_mid = sum(x_start[:-1])/len(x_start[:-1])
-        y_start_mid = sum(y_start[:-1])/len(y_start[:-1])
+        x_start_mid = start_pt[0]
+        y_start_mid = start_pt[1]
 
         plt.plot(x_start, y_start, 'b-')  # Plot start boundary
         plt.plot(x_start_mid, y_start_mid, 'bo') # Plot center point of Thymio robot
