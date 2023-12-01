@@ -21,9 +21,10 @@ def plot_map(obstacle_vertices, xAxeLim, yAxeLim ,larger=False, larger_obs=None,
         plt.plot(x_values, y_values, 'k-')  # Plot obstacle boundary
         
         # Add numbers indicating vertex positions
-        for _, vertex in enumerate(obstacle):
-            plt.text(vertex[0], vertex[1], str(i), color='blue', fontsize=8, ha='right', va='bottom')
-            i = i+1
+        if graph :
+            for vertex in obstacle:
+                plt.text(vertex[0], vertex[1], str(i), color='blue', fontsize=8, ha='right', va='bottom')
+                i = i+1
     
     if larger :
         for obstacle in larger_obs :

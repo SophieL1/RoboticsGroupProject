@@ -14,16 +14,18 @@ from drawMaps import plot_map
 from processObstacles import expand_obstacles
 from VGraph import get_nodes_and_sides, get_edges_and_weights, create_graph
 from dijkstraAlgorithm import dijkstra
-from instructionsCoordinates import get_lengths_and_angles, get_wheretogo_coordinates
+from instructionsCoordinates import get_lengths_and_angles, get_wheretogo_coordinates, get_vertices_from_uniqpoint
 
 
-def findPath(obs_list, start_pos, robot_dir0, goal_pos, width, verbose=True) :
-    xLimMap = 605
-    yLimMap = 570
+def findPath(obs_list, start_point, robot_dir0, goal_point, width, width_goal, thymio_dimensions, xlim= 605, ylim=570, verbose=True) :
+    xLimMap = xlim
+    yLimMap = ylim
     
-    # Representing start and goal by middle point
-    start_point = tuple([sum([row[0] for row in start_pos])/len(start_pos), sum([row[1] for row in start_pos])/len(start_pos)])
-    goal_point = tuple([sum([row[0] for row in goal_pos])/len(goal_pos), sum([row[1] for row in goal_pos])/len(goal_pos)])
+    # Representing Thymio and goal by their 4 vertices
+    pos_Thymio = [start_point[0], start_point[1], robot_dir0]
+    width_goal = width_goal
+    widths_Thymio = thymio_dimensions
+    start_pos, goal_pos = get_vertices_from_uniqpoint(goal_point, pos_Thymio, width_goal, widths_Thymio)
     
     # Plot the map with obstacles
     if verbose :
