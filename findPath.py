@@ -11,7 +11,7 @@ import networkx as nx
 import holoviews as hv
 
 from drawMaps import plot_map
-from processObstacles import expand_obstacles
+from processObstacles import expand_obstacles, sort_obstacle_vertices
 from VGraph import get_nodes_and_sides, get_edges_and_weights, create_graph
 from dijkstraAlgorithm import dijkstra
 from instructionsCoordinates import get_lengths_and_angles, get_wheretogo_coordinates, get_vertices_from_uniqpoint
@@ -20,6 +20,9 @@ from instructionsCoordinates import get_lengths_and_angles, get_wheretogo_coordi
 def findPath(obs_list, start_point, robot_dir0, goal_point, width, width_goal, thymio_dimensions, xlim= 605, ylim=570, verbose=True) :
     xLimMap = xlim
     yLimMap = ylim
+    
+    # First processing of the obstacles to make sure vertices are ordered
+    obs_list = sort_obstacle_vertices(obs_list)
     
     # Representing Thymio and goal by their 4 vertices
     pos_Thymio = [start_point[0], start_point[1], robot_dir0]
