@@ -76,7 +76,7 @@ def get_wheretogo_coordinates(path, cost, vertices) :
     return : coords, list of coordinates of points we want to go through
     """
     coords = []
-    for node in range(len(path)-1) :
+    for node in range(len(path)) :
         coords.append([vertices[path[node]][0], vertices[path[node]][1]])
     
     return coords
