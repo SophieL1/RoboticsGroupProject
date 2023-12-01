@@ -78,4 +78,5 @@ def plot_map(obstacle_vertices, xAxeLim, yAxeLim ,larger=False, larger_obs=None,
     plt.xlim(-0.5, xAxeLim)
     plt.ylim(-0.5, yAxeLim)
     
+    plt.gca().invert_yaxis()  # Invert y-axis
     plt.show()
