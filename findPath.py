@@ -87,4 +87,4 @@ def findPath(obs_list, start_point, robot_dir0, goal_point, width, width_goal, t
     if verbose :
         print(myLengths, '\n', myAngles)
         
-    return myLengths, myAngles
+    return myCoordinates, expanded_obs
