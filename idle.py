@@ -1,0 +1,2 @@
+def idle():
+    print("idle")
