@@ -2,37 +2,28 @@ import cv2
 import numpy as np
 from cv2 import aruco
 
-def live_cam(cam, corner_coordinates, my_coordinates, expanded_obs, init_pos):
+def live_cam(cam, corner_coordinates, my_coordinates, expanded_obs):
     """
     visualization of the camera
     """
-    init_pos = [init_pos[0][0],init_pos[1][0],init_pos[2][0]]
     img = read_camera_image(cam)
     img_croped = crop_image(img, corner_coordinates)
-    pos_thymio = get_position_orientation_thymio(img_croped)
-    img_croped = visual_img(img_croped, my_coordinates, expanded_obs, init_pos, pos_thymio)
+    final_img = visual_img(img_croped, my_coordinates, expanded_obs)
     cv2.imshow('Vision', img_croped)
-    if pos_thymio is not None:
-        pos_thymio = np.array([[pos_thymio[0]],[pos_thymio[1]],[pos_thymio[2]]])
 
-    return pos_thymio
+    return None
 
-def visual_img(img_croped, my_coordinates, expanded_obs, init_pos, pos_thymio):
+def visual_img(img_croped, my_coordinates, expanded_obs):
     
-    for coord_list in expanded_obs:
-        for coord in coord_list:
-            center = (int(coord[0]), int(coord[1]))
-            if 0 <= center[0] < 850 and 0 <= center[1] < 800:
-                cv2.circle(img_croped, center, radius=5, color=(0, 0, 255), thickness=-1)
-    pos1=(int(init_pos[0]),int(init_pos[1]))
-    for coord in my_coordinates:
-        pos2=(int(coord[0]), int(coord[1]))
-        cv2.line(img_croped, pos1, pos2, (255, 0, 0), 2)
-        pos1=pos2
-    if pos_thymio is not None :
-        cv2.circle(img_croped, (int(pos_thymio[0]),int(pos_thymio[1])), radius=10, color=(0, 255, 0), thickness=-1)
+    """for coord in my_coordinates:
+        # Convert the coordinates to integers
+        center = (int(coord[0]), int(coord[1]))
 
-    return img_croped
+        # Draw a circle (point) with a small radius (e.g., 2) and color (0, 255, 0)
+        cv2.circle(img_croped, center, 2, (0, 255, 0), -1)  # Use -1 thickness to fill the circle"""
+
+    final_img = cv2.circle(img_croped, my_coordinates[0], radius=10, color=(0, 0, 255), thickness=5)
+    return final_img
     
     
     
@@ -180,7 +171,6 @@ def crop_image(img, coordinates):
 
 
 
-
 def get_position_orientation_thymio(img):
     """
     Get the position and the orientation of the thymio
@@ -195,31 +185,29 @@ def get_position_orientation_thymio(img):
     # Detection of ArUco markers
     corners, ids, rejectedImgPoints = aruco.detectMarkers(img, aruco_dict, parameters=parameters)
 
-    # Check if markers are detected and if Thymio marker (ID 4) is present
-    if ids is not None and 4 in ids:
+    # If markers are detected
+    if ids is not None:
         for i, marker_id in enumerate(ids):
             if marker_id == 4:  # get only the 4th which is the thymio
-
+                
                 # Position
                 position = np.mean(corners[i][0], axis=0)
+                #print("Position - \n", position)
                 
                 # Orientation of the robot
                 vector = corners[i][0][0] - corners[i][0][3]
                 x_axis_vector = np.array([1, 0])  # Vector along the x-axis
                 angle_radians = np.arctan2(np.linalg.det([vector, x_axis_vector]), np.dot(vector, x_axis_vector))
                 orientation = -np.degrees(angle_radians)
-
+                #print("Orientation - \n", orientation)
+                
                 keypoints_coordinates.append(corners[i][0][0])  # Append the corners of the marker
-
         keypoints_coordinates = [keypoint.astype(int).tolist() for keypoint in keypoints_coordinates]
+    # Placeholder for position and orientation (modify accordingly)
+    raw_camera_measurement = [int(position[0]), int(position[1]), round(orientation,2)]
 
-        # Placeholder for position and orientation (modify accordingly)
-        raw_camera_measurement = [int(position[0]), int(position[1]), round(orientation, 2)]
-
-        return raw_camera_measurement
-    
-    # Return None if Thymio marker is not found
-    return None
+    #return position,orientation
+    return raw_camera_measurement
 
 
 
