@@ -12,6 +12,8 @@ def live_cam(cam, corner_coordinates, my_coordinates, expanded_obs, init_pos):
     pos_thymio = get_position_orientation_thymio(img_croped)
     img_croped = visual_img(img_croped, my_coordinates, expanded_obs, init_pos, pos_thymio)
     cv2.imshow('Vision', img_croped)
+    if pos_thymio is not None:
+        pos_thymio = np.array([[pos_thymio[0]],[pos_thymio[1]],[pos_thymio[2]]])
 
     return pos_thymio
 
