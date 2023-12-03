@@ -17,7 +17,7 @@ from dijkstraAlgorithm import dijkstra
 from instructionsCoordinates import get_lengths_and_angles, get_wheretogo_coordinates, get_vertices_from_uniqpoint
 
 
-def findPath(obs_list, start_point, robot_dir0, goal_point, width, width_goal, thymio_dimensions, xlim= 605, ylim=570, verbose=True) :
+def findPath(obs_list, start_point, robot_dir0, goal_point, width, width_goal, thymio_dimensions, xlim=850, ylim=800, verbose=True) :
     xLimMap = xlim
     yLimMap = ylim
     
@@ -87,4 +87,6 @@ def findPath(obs_list, start_point, robot_dir0, goal_point, width, width_goal, t
     if verbose :
         print(myLengths, '\n', myAngles)
         
-    return myCoordinates, expanded_obs
+    initialPosition = [myCoordinates[0], myCoordinates[1], robot_dir0]
+        
+    return initialPosition, expanded_obs, myCoordinates[1:]
