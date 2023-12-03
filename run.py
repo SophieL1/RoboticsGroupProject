@@ -1,3 +1,4 @@
+from tdmclient import ClientAsync
 import math
 import numpy as np
 import cv2
@@ -7,7 +8,7 @@ from motion import motion, motors
 from camera import live_cam
 
     
-async def run(x_init, expanded_obs, trajectory_points, cam, corner_coordinates):
+async def run(x_init, expanded_obs, trajectory_points, cam, corner_coordinates,node,client):
     Tm = 0.2 #5Hz
     estimated_pos = x_init
     delta_distance = 0
