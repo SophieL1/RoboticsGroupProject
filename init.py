@@ -63,7 +63,9 @@ def init():
                         width_goal = 50
                         thymio_dimensions = [80, 55, 30, 55]
                         init_pos, expanded_obs, my_coordinates = findPath(pos_obstacle, pos_thymio, robot_dir0, pos_goal, width, width_goal, thymio_dimensions, xlim= 850, ylim=800, verbose=True)
-                        
+                        print("init_pos before : ",init_pos)
+                        init_pos = np.array([[init_pos[0]],[init_pos[1]],[init_pos[2]]])
+                        print("init_pos after : ",init_pos)
                         return init_pos, expanded_obs, my_coordinates, cam, corner_coordinates
                 
     finally:

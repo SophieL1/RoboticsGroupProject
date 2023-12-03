@@ -6,6 +6,7 @@ def live_cam(cam, corner_coordinates, my_coordinates, expanded_obs, init_pos):
     """
     visualization of the camera
     """
+    init_pos = [init_pos[0][0],init_pos[1][0],init_pos[2][0]]
     img = read_camera_image(cam)
     img_croped = crop_image(img, corner_coordinates)
     pos_thymio = get_position_orientation_thymio(img_croped)
