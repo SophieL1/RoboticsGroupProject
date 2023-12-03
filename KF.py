@@ -14,12 +14,10 @@ R = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])                             # TO
 
 def kalman(raw_wheel_measurement, raw_camera_measurement, estimated_pos):
     x = estimated_pos
-    print(x)
     x_hat = x
-
     u = raw_wheel_measurement
     x_hat, P_hat = kalman_predict(x, u)
-    x_hat = kalman_update(x_hat, P_hat, raw_camera_measurement)
+    x_hat P_hat = kalman_update(x_hat, P_hat, raw_camera_measurement)
     return x_hat
 
 
@@ -43,8 +41,15 @@ def B_kalman(x):
 
 def kalman_predict(x, u):
     B = B_kalman(x)
-
+    #print("x: ", x) 
+    
     x_hat = F.dot(x) + B.dot(u)
+   # print("x_hat: ", x_hat)
+    #print("u: ", u)
+   # print("F: ", F)
+   # print("B: ", B)
+   # print("F.dot(x): ", F.dot(x))
+   # print("B.dot: ", B.dot)
     P_hat = F.dot(P).dot(F.T) + Q
     return x_hat, P_hat
 

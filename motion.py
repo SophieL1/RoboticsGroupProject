@@ -80,17 +80,29 @@ def delta_pos(output_speed_l, output_speed_r,time_interval):
 
 
 def relative_pos(pos,pos_goal,idx):
-    #pos=[[x],[y],[angle]], pos_goal= [x1,y1,x2,y2,...]
-    dist_origin_robot = math.sqrt((pos[0,0])**2+(pos[1,0])**2)
-    dist_origin_goal = math.sqrt(pos_goal[idx]**2+pos[idx+1]**2)
-    relativ_dist = dist_origin_goal-dist_origin_robot
+    #pos=[[x],[y],[angle]], pos_goal= [[x1,y1],(x2,y2),...]
+    print("pos = ",pos)
+    #pos = np.array(pos)
+    pos_goal = np.array(pos_goal)
+    relativ_dist = math.sqrt((pos_goal[idx,0] - pos[0,0])**2 + (pos_goal[idx,1]- pos_goal[idx,0])**2)
     return relativ_dist, pos[2,0]
 
-def dist_angle_goal(pos_goal,idx): #(x1,y1,x2,y2)
-    dist = math.sqrt(pos_goal[idx]**2+pos_goal[idx+1]**2)-math.sqrt(pos_goal[idx+2]**2+pos_goal[idx+3]**2)
-    theta = math.atan((pos[idx+3]-pos_goal[idx+1])/(pos[idx+2]-pos_goal[idx]))
-    return dist, theta
+def dist_angle_goal(trajectory_points): #[(x1,y1),(x2,y2)]
+    dist = []
+    angle = []
+    for i in range(len(trajectory_points) - 1):
+        dx = trajectory_points[i+1][0] - trajectory_points[i][0]
+        dy = trajectory_points[i+1][1] - trajectory_points[i][1]
 
+        # Corrected distance calculation
+        distance = math.sqrt(dx**2 + dy**2)
+        dist.append(distance)
+
+        # Corrected angle calculation
+        angle_rad = math.atan2(dy, dx)
+        angle_deg = math.degrees(angle_rad)
+        angle.append(angle_deg)
+    return dist, angle
 
 
 ######PUBLIC FUNCTION####### 
@@ -100,8 +112,6 @@ def motion(estimated_pos,pos_goal,prox_horizontal): # #real parameters:(estimate
     output_speed_l=0 
     output_speed_r=0
     end = False
-    #distance_goal = [50, 30]
-    #angle_goal = [30, 50]
     
     #static variables
     if not hasattr(motion, "idx"):
@@ -111,12 +121,16 @@ def motion(estimated_pos,pos_goal,prox_horizontal): # #real parameters:(estimate
         # If not, initialize mot_state to the state ROTATION
         motion.mot_state = motion_state.ROTATION
         
-    distance,angle = relative_pos(estimated_pos,pos_goal,idx);
-    print("\t\t distance: ",distance)
-    print("\t\t angle: ",angle)
-    
+    print("\t\t pos_goal: ",pos_goal)
+    distance_goal,angle_goal = dist_angle_goal(pos_goal)
+        
     if motion.idx<len(distance_goal):
-        distance_goal,angle_goal = (pos_goal,idx)
+        
+        distance,angle = relative_pos(estimated_pos,pos_goal,motion.idx);
+        print("\t\t distance_goal: ",distance_goal[motion.idx])
+        print("\t\t angle_goal: ",angle_goal[motion.idx])
+        print("\t\t distance: ",distance)
+        print("\t\t angle: ",angle)
         if motion.mot_state == motion_state.ROTATION:
             angle_rot = angle_goal[motion.idx]-angle
             print("\t\t angle_rot: ",angle_rot)
@@ -138,7 +152,7 @@ def motion(estimated_pos,pos_goal,prox_horizontal): # #real parameters:(estimate
                 output_speed_r = 0
                 print("\t\t distance fin: ",distance)
                 motion.mot_state = motion_state.ROTATION
-                motion.idx += 2 ### 
+                motion.idx += 1 ### 
                 
     else:
         output_speed_l = 0 
