@@ -169,6 +169,8 @@ def get_edges_and_weights(nodes, vertices, sides, verbose=False) :
     weights = []
     node = 0
     # for all group/element that has nodes (obstacle or start or goal)
+    if verbose :
+        print("Visible vertices from each node :")
     for num_group in range(len(nodes)) :
         # for all node of this group
         for num_node in range(len(nodes[num_group])) :
@@ -182,6 +184,8 @@ def get_edges_and_weights(nodes, vertices, sides, verbose=False) :
                 distance = np.sqrt((vertices[node][0]-vertices[vertex][0])**2+(vertices[node][1]-vertices[vertex][1])**2)
                 weights.append(distance)
             node += 1
+    if verbose :
+        print("\n")
     return edges, weights
 
 def create_graph(nodes, edges, weights, verbose=False) :
@@ -191,8 +195,6 @@ def create_graph(nodes, edges, weights, verbose=False) :
     for group in nodes :
         for node in group :
             all_nodes.append(node)
-    if verbose :
-        print(all_nodes)
     
     round_weights = []
     uniq_edges = []
@@ -204,13 +206,15 @@ def create_graph(nodes, edges, weights, verbose=False) :
     for edge, weight in zip(uniq_edges, round_weights):
         G.add_edge(edge[0], edge[1], weight=weight)
     pos = nx.spring_layout(G)  # Define the layout for the graph nodes
-    nx.draw(G, pos, with_labels=True, node_size=500, node_color='skyblue', font_weight='bold')
-
-    # Add edge labels with weights
-    labels = nx.get_edge_attributes(G, 'weight')
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=labels)
-
-    plt.title('Weighted Graph')
-    plt.show()
+    if verbose :
+        print("Weighted graph :")
+        nx.draw(G, pos, with_labels=True, node_size=500, node_color='skyblue', font_weight='bold')
+    
+        # Add edge labels with weights
+        labels = nx.get_edge_attributes(G, 'weight')
+        nx.draw_networkx_edge_labels(G, pos, edge_labels=labels)
+    
+        plt.title('Weighted Graph')
+        plt.show()
     return G
 
