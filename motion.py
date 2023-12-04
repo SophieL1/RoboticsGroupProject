@@ -5,7 +5,7 @@ import numpy as np
 
 #CONSTANTS
 SPEED = 100
-SPEED_ROT = 100
+SPEED_ROT = 50
 SPEED_FACTOR =0.51 #0.45  #0.55 # 0.386  
 DISTANCE_BETWEEN_WHEELS = 93  #mm
 SENSOR_SCALE = 200
@@ -13,7 +13,7 @@ MOTOR_SCALE = 20
 DISTANCE_TRESHOLD = 5
 ROTATION_TRESHOLD = 6
 KP = 1.2
-Tm = 0.2 #10 Hz (frequency at which the motors speed change)
+#Tm = 0.2 #10 Hz (frequency at which the motors speed change)
 
 class motion_state(IntEnum):
     FOLLOW_TRAJECTORY = 1
@@ -65,6 +65,7 @@ def follow_trajectory(prox_horizontal, distance_goal,angle_goal): #peut être ra
 
 # position of the robot between each time intervals (distance in mm and angle in degrees)
 def delta_pos(output_speed_l, output_speed_r,time_interval):
+
     l_speed_mms = conv_thymio_to_mms(output_speed_l)
     r_speed_mms = conv_thymio_to_mms(output_speed_r)
     
@@ -84,7 +85,15 @@ def relative_pos(pos,pos_goal,idx):
     print("pos = ",pos)
     #pos = np.array(pos)
     pos_goal = np.array(pos_goal)
-    relativ_dist = math.sqrt((pos_goal[idx,0] - pos[0,0])**2 + (pos_goal[idx,1]- pos_goal[idx,0])**2)
+    idx = idx+1
+    print("---------------------CALCUL DISTANCE------------------------------")
+    print("pos_goal : ", pos_goal)
+    print("pos : ", pos)
+    print("calcul 1 : ", (pos_goal[idx,0] - pos[0,0]))
+    print("calcul 2 : ", (pos_goal[idx,1]- pos_goal[idx,0]))
+    relativ_dist = math.sqrt((pos_goal[idx,0] - pos[0,0])**2 + (pos_goal[idx,1]- pos_goal[idx,1])**2)
+    print("relative distance : ", relativ_dist)
+    print("-------------------------------------------------------------------")
     return relativ_dist, pos[2,0]
 
 def dist_angle_goal(trajectory_points): #[(x1,y1),(x2,y2)]
@@ -106,7 +115,7 @@ def dist_angle_goal(trajectory_points): #[(x1,y1),(x2,y2)]
 
 
 ######PUBLIC FUNCTION####### 
-def motion(estimated_pos,pos_goal,prox_horizontal): # #real parameters:(estimate_pos,pos_goal,distance_goal,angle_goal)
+def motion(estimated_pos,pos_goal,prox_horizontal, Tm): # #real parameters:(estimate_pos,pos_goal,distance_goal,angle_goal)
     
     #local variables 
     output_speed_l=0 
@@ -146,8 +155,9 @@ def motion(estimated_pos,pos_goal,prox_horizontal): # #real parameters:(estimate
         # move from a point the following point given by the visibility map   
         if motion.mot_state == motion_state.FOLLOW_TRAJECTORY:
             output_speed_l, output_speed_r = follow_trajectory(prox_horizontal, distance_goal[motion.idx],angle_goal[motion.idx])
-            distance_remaining = distance_goal[motion.idx]-distance
-            if distance_remaining <= DISTANCE_TRESHOLD:
+            #distance_remaining = distance_goal[motion.idx]-distance
+            #if abs(distance_remaining) <= DISTANCE_TRESHOLD:
+            if distance <= DISTANCE_TRESHOLD:
                 output_speed_l = 0 
                 output_speed_r = 0
                 print("\t\t distance fin: ",distance)
@@ -158,6 +168,8 @@ def motion(estimated_pos,pos_goal,prox_horizontal): # #real parameters:(estimate
         output_speed_l = 0 
         output_speed_r = 0
         end = True
+    print("\t\t output speed L : ", output_speed_l)
+    print("\t\t output speed R : ", output_speed_r)
     delta_distance, delta_angle = delta_pos(output_speed_l, output_speed_r,Tm)
     return output_speed_l, output_speed_r,delta_distance, delta_angle,end # vrai return: delta_distance, delta_angle,end
 
