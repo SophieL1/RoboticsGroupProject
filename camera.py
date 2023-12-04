@@ -2,22 +2,23 @@ import cv2
 import numpy as np
 from cv2 import aruco
 
-def live_cam(cam, corner_coordinates, my_coordinates, expanded_obs, init_pos):
+def live_cam(cam, corner_coordinates, my_coordinates, expanded_obs, init_pos, estimated_pos, P):
     """
     visualization of the camera
     """
     init_pos = [init_pos[0][0],init_pos[1][0],init_pos[2][0]]
+    estimated_pos = [estimated_pos[0][0],estimated_pos[1][0],estimated_pos[2][0]]
     img = read_camera_image(cam)
     img_croped = crop_image(img, corner_coordinates)
     pos_thymio = get_position_orientation_thymio(img_croped)
-    img_croped = visual_img(img_croped, my_coordinates, expanded_obs, init_pos, pos_thymio)
+    img_croped = visual_img(img_croped, my_coordinates, expanded_obs, init_pos, pos_thymio, estimated_pos, P)
     cv2.imshow('Vision', img_croped)
     if pos_thymio is not None:
         pos_thymio = np.array([[pos_thymio[0]],[pos_thymio[1]],[pos_thymio[2]]])
 
     return pos_thymio
 
-def visual_img(img_croped, my_coordinates, expanded_obs, init_pos, pos_thymio):
+def visual_img(img_croped, my_coordinates, expanded_obs, init_pos, pos_thymio, estimated_pos, P):
     
     for coord_list in expanded_obs:
         for coord in coord_list:
@@ -31,6 +32,25 @@ def visual_img(img_croped, my_coordinates, expanded_obs, init_pos, pos_thymio):
         pos1=pos2
     if pos_thymio is not None :
         cv2.circle(img_croped, (int(pos_thymio[0]),int(pos_thymio[1])), radius=10, color=(0, 255, 0), thickness=-1)
+    
+    x = int(estimated_pos[0])
+    y = int(estimated_pos[1])
+    alpha = int(estimated_pos[2])
+
+    # Calculate ellipse parameters
+    lambda_, v = np.linalg.eig(P[0:2, 0:2])
+    lambda_ = np.sqrt(lambda_)
+    lambda_ = np.nan_to_num(lambda_, nan=1.0)  # Remplacez NaN par une valeur par défaut
+    angle = np.rad2deg(np.arctan2(*v[:,0][::-1]))
+
+    # Scale the ellipse size to be visible
+    scale_factor = 30  # Adjust this scale to fit your needs
+    width = int(lambda_[0] * 2 * scale_factor)
+    height = int(lambda_[1] * 2 * scale_factor)
+
+    # Draw the ellipse
+    cv2.ellipse(img_croped, (x, y), (width, height), angle, 0, 360, (255, 0, 0), 2)
+    cv2.circle(img_croped, (x, y), radius=4, color=(0, 0, 255), thickness=-1)
 
     return img_croped
     
@@ -259,7 +279,7 @@ def get_obstacles_coordinates(img,pos_goal):
         mask[int(min_y):int(max_y), int(min_x):int(max_x)] = 255
         img_obstacles = cv2.bitwise_or(img, mask)
         
-    
+    size_marker = 70
     (h, w) = img_obstacles.shape
     #Images without the markers on the corner and the goal
     mask = np.zeros_like(img_obstacles, dtype=np.uint8)

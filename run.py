@@ -14,6 +14,7 @@ from camera import live_cam
 async def run(x_init, expanded_obs, trajectory_points, cam, corner_coordinates,node,client):
     #Tm = 0.2 #5Hz
     estimated_pos = x_init
+    print("-------------------------------------------------", estimated_pos)
     delta_distance = 0
     delta_angle = 0
     end = False
@@ -22,22 +23,24 @@ async def run(x_init, expanded_obs, trajectory_points, cam, corner_coordinates,n
     old_time = None
     x_pos_init = [x_init[0][0],x_init[1][0]]
     trajectory_points.insert(0, x_pos_init)
+    P = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]) 
     while end == False:
-        #raw_wheel_measurement = [[delta_distance],[delta_angle]]
-        raw_camera_measurement = live_cam(cam, corner_coordinates, trajectory_points, expanded_obs, x_init)
-        #print("raw_wheel_measurement: ", raw_wheel_measurement)
-        #print("raw_camera_measurement: ", raw_camera_measurement)
-        #print("estimated_pos: ", estimated_pos)
-        estimated_pos = kalman(raw_wheel_measurement, raw_camera_measurement, estimated_pos)
-        print ("estimated pos = ",estimated_pos)
-        await node.wait_for_variables({"prox.horizontal"})
-        prox_horizontal = node['prox.horizontal']
+        raw_camera_measurement = live_cam(cam, corner_coordinates, trajectory_points, expanded_obs, x_init, estimated_pos, P)
+        print ("raw_camera_measurement = ",raw_camera_measurement)
         actual_time = time.time()
         if old_time is not None :
             Tm = actual_time - old_time
         else :
             Tm = 0
+        estimated_pos, P = kalman(raw_wheel_measurement, raw_camera_measurement, estimated_pos, Tm, P)
+        print ("estimated pos = ",estimated_pos)
+        await node.wait_for_variables({"prox.horizontal"})
+        prox_horizontal = node['prox.horizontal']
         left_speed,right_speed,delta_distance,delta_angle,end=motion(estimated_pos,trajectory_points,prox_horizontal,Tm) 
+        raw_wheel_measurement = np.array([[delta_distance],[delta_angle]])
+        print("raw_wheel_measurement : ", raw_wheel_measurement)
+        print("raw_camera_measurement : ", raw_camera_measurement)
+        print("P : ", P)
         await node.set_variables(motors(left_speed, right_speed))
         old_time = actual_time
         if cv2.waitKey(100) == 27:  # ASCII code for 'Esc' key

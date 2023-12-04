@@ -39,7 +39,8 @@ def init():
                 if corner_coordinates is not None: #if we had get the coordinates
                     img_crop = crop_image(gray,corner_coordinates) #crop image
                     pos_goal = find_goal(img_crop)  #find goal
-                    if pos_goal is not None:
+                    #if pos_goal is not None:
+                    if len(pos_goal) == 2:
                         img_obstacles,pos_obstacle = get_obstacles_coordinates(img_crop,pos_goal) #get coordinates of the obstacles
                         pos_thymio = get_position_orientation_thymio(img_crop) #get position of thymio
                         first_time = False
