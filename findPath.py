@@ -55,19 +55,19 @@ def findPath(obs_list, start_point, robot_dir0, goal_point, width, width_goal, t
     myGraph = create_graph(myNodes, myEdges, myWeights, verbose=verbose)
     
     goal_idx = myNodes[-1][0]
-    myPath, myCost = dijkstra(myGraph, 0, goal_idx, verbose=False)
+    myPath = nx.dijkstra_path(myGraph, 0, goal_idx, weight='weight')
     if verbose :
-        print('Path nodes :', myPath, '\nPath cost :', myCost)
+        print('Path nodes :', myPath)
         
     # Getting coordinates of the points we want to go through
-    myCoordinates = get_wheretogo_coordinates(myPath, myCost, myVertices)
+    myCoordinates = get_wheretogo_coordinates(myPath, myVertices)
     if verbose :
         print("Coordinates of points of the path :")
         print(myCoordinates)
         
     # Getting the lengths of segments of path, and the angles between them.
     # Negative angle means turn to the left, positive means turn to the left (in degree).
-    myLengths, myAngles = get_lengths_and_angles(myPath, myCost, myVertices, robot_dir0)
+    myLengths, myAngles = get_lengths_and_angles(myPath, myVertices, robot_dir0)
     if verbose :
         print("Lengths to go forward and angles to rotate :")
         print(myLengths, '\n', myAngles)

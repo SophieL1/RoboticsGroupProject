@@ -68,7 +68,7 @@ def get_vertices_from_uniqpoint(pos_goal, pos_Thymio, width_goal, widths_Thymio)
     return thymio4verts, goal4verts
     
 
-def get_wheretogo_coordinates(path, cost, vertices) :
+def get_wheretogo_coordinates(path, vertices) :
     """
     args : path, sequence of vertices to visit
            cost, total distance to go
@@ -82,7 +82,7 @@ def get_wheretogo_coordinates(path, cost, vertices) :
     return coords
     
 
-def get_lengths_and_angles(path, cost, vertices, robot_dir0) :
+def get_lengths_and_angles(path, vertices, robot_dir0) :
     """
     args : path, sequence of vertices to visit
            cost, total distance to go
