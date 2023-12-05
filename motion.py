@@ -47,15 +47,20 @@ def avoid_obstacle(prox_horizontal):
    
     corr_speed_l = y[0]//MOTOR_SCALE
     corr_speed_r = y[1]//MOTOR_SCALE
+    print("\t\t corr obstacle : ",corr_speed_l, corr_speed_r)
     return corr_speed_l, corr_speed_r
 
 def p_controller(angle,angle_goal):
     angle_error = angle-angle_goal
+    if angle_error > 180:
+        angle_error = angle_error - 360
+    if angle_error < -180:
+        angle_error = angle_error + 360
     corr_l = - KP*angle_error
     corr_r =  KP*angle_error
     corr_l = int(corr_l)
     corr_r = int(corr_r)
-    #print("correction L,R : ", corr_l, corr_r)
+    print("\t\t correction PID : ", corr_l, corr_r)
     return corr_l, corr_r
 
 # Correction of the speed motors 
@@ -64,7 +69,7 @@ def motors_correction(prox_horizontal,angle_goal,angle):
     p_corr_l, p_corr_r = p_controller(angle,angle_goal)
     speed_l = SPEED + avoid_speed_l + p_corr_l
     speed_r = SPEED + avoid_speed_r + p_corr_r
-    #print("\t\t angle: ",angle)
+    print("\t\t speed: ",speed_l,speed_r)
     return speed_l,speed_r
 
 
@@ -86,10 +91,11 @@ def delta_pos(output_speed_l, output_speed_r,time_interval):
 
 #Compute the distance and angle between the thymio position and the next trajectory point/position goal
 def relative_pos(pos,pos_goal,idx): #pos=[[x],[y],[angle]], pos_goal= [[x1,y1],(x2,y2),...]
-    print("pos = ",pos)
+    #print("pos = ",pos)
     #pos = np.array(pos)
     pos_goal = np.array(pos_goal)
     idx = idx+1
+    #print("\t\t pos : ",pos)
     relativ_dist = math.sqrt((pos_goal[idx,0] - pos[0,0])**2 + (pos_goal[idx,1]- pos[1,0])**2)
     return relativ_dist, pos[2,0]
 
@@ -110,6 +116,12 @@ def calcul_angle(trajectory_points, estimated_pos, index): #[(x1,y1),(x2,y2)]
     dy = trajectory_points[index+1][1] - estimated_pos[1]
     angle_goal_live = math.degrees(math.atan2(dy, dx))
     return angle,angle_goal_live
+
+def normalize_angle(angle):
+    normalized_angle = angle % 360.0
+    if normalized_angle > 180.0:
+        normalized_angle -= 360.0
+    return normalized_angle
 
 
 ######PUBLIC FUNCTION####### 
@@ -135,17 +147,20 @@ def motion(estimated_pos,pos_goal,prox_horizontal, Tm): # #real parameters:(esti
     if motion.idx<len(angle_goal):
         
         distance,angle = relative_pos(estimated_pos,pos_goal,motion.idx)
-        #print("\t\t angle_goal: ",angle_goal[motion.idx])
-        #print("\t\t distance: ",distance)
+        print("-------------------------------------")
+        print("\t\t angle_goal: ",angle_goal[motion.idx])
+        print("\t\t distance: ",distance)
         #print("\t\t angle: ",angle)
-        #print("\t\t angle goal live: ",angle_goal_live)
+        angle = normalize_angle(angle)
+        print("\t\t angle: ",angle)
+        print("\t\t angle goal live: ",angle_goal_live)
         if motion.mot_state == motion_state.ROTATION:
             angle_rot = angle_goal[motion.idx]-angle
             if angle_rot > 180:
                 angle_rot = angle_rot-360
             elif angle_rot < -180:
                 angle_rot = angle_rot+360
-            #print("\t\t angle_rot: ",angle_rot)
+            print("\t\t angle_rot: ",angle_rot)
             if angle_rot<=0: #turn in counterclockwise
                 output_speed_l = -(SPEED_ROT) 
                 output_speed_r = SPEED_ROT

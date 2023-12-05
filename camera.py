@@ -5,31 +5,43 @@ from cv2 import aruco
 def live_cam(cam, corner_coordinates, my_coordinates, expanded_obs, init_pos, estimated_pos, P):
     """
     visualization of the camera
+    - crop image with the 4 corners patterns
+    - draw circles and lines on the image
+    - get the position/orientation of the Thymio
     """
+    #need to change some variables
     init_pos = [init_pos[0][0],init_pos[1][0],init_pos[2][0]]
     estimated_pos = [estimated_pos[0][0],estimated_pos[1][0],estimated_pos[2][0]]
+    #read camera
     img = read_camera_image(cam)
+    #crop image with the patterns
     img_croped = crop_image(img, corner_coordinates)
+    #get Thymio position/orientation
     pos_thymio = get_position_orientation_thymio(img_croped)
     img_croped = visual_img(img_croped, my_coordinates, expanded_obs, init_pos, pos_thymio, estimated_pos, P)
     cv2.imshow('Vision', img_croped)
     if pos_thymio is not None:
         pos_thymio = np.array([[pos_thymio[0]],[pos_thymio[1]],[pos_thymio[2]]])
-
     return pos_thymio
 
 def visual_img(img_croped, my_coordinates, expanded_obs, init_pos, pos_thymio, estimated_pos, P):
-    
+    """
+    Draw the best line, add points on obstacles and point on Thymio with
+    camera and estimated with the filter
+    """
+    # draw circle on obstacles
     for coord_list in expanded_obs:
         for coord in coord_list:
             center = (int(coord[0]), int(coord[1]))
             if 0 <= center[0] < 850 and 0 <= center[1] < 800:
                 cv2.circle(img_croped, center, radius=5, color=(0, 0, 255), thickness=-1)
     pos1=(int(init_pos[0]),int(init_pos[1]))
+    # draw best line
     for coord in my_coordinates:
         pos2=(int(coord[0]), int(coord[1]))
         cv2.line(img_croped, pos1, pos2, (255, 0, 0), 2)
         pos1=pos2
+    # draw position of Thymio
     if pos_thymio is not None :
         cv2.circle(img_croped, (int(pos_thymio[0]),int(pos_thymio[1])), radius=10, color=(0, 255, 0), thickness=-1)
     
@@ -38,18 +50,19 @@ def visual_img(img_croped, my_coordinates, expanded_obs, init_pos, pos_thymio, e
     alpha = int(estimated_pos[2])
 
     # Calculate ellipse parameters
-    lambda_, v = np.linalg.eig(P[0:2, 0:2])
+    """lambda_, v = np.linalg.eig(P[0:2, 0:2])
     lambda_ = np.sqrt(lambda_)
-    lambda_ = np.nan_to_num(lambda_, nan=1.0)  # Remplacez NaN par une valeur par défaut
+    lambda_ = np.nan_to_num(lambda_, nan=1.0)
     angle = np.rad2deg(np.arctan2(*v[:,0][::-1]))
 
     # Scale the ellipse size to be visible
-    scale_factor = 30  # Adjust this scale to fit your needs
+    scale_factor = 30
     width = int(lambda_[0] * 2 * scale_factor)
-    height = int(lambda_[1] * 2 * scale_factor)
+    height = int(lambda_[1] * 2 * scale_factor)"""
 
-    # Draw the ellipse
-    cv2.ellipse(img_croped, (x, y), (width, height), angle, 0, 360, (255, 0, 0), 2)
+    # Draw the filter and the estimated point
+    #cv2.ellipse(img_croped, (x, y), (width, height), angle, 0, 360, (255, 0, 0), 2)
+    cv2.ellipse(img_croped, (x, y), (10*abs(int(P[0][0])), 10*abs(int(P[1][1]))), 0, 0, 360, (255, 0, 0), 2)
     cv2.circle(img_croped, (x, y), radius=4, color=(0, 0, 255), thickness=-1)
 
     return img_croped
@@ -264,16 +277,16 @@ def get_obstacles_coordinates(img,pos_goal):
     parameters = aruco.DetectorParameters()
     
     keypoints_coordinates = []
-    size_marker = 50
+    
+    size_marker = 90
     # Image without the marker on the Thymio
     corners, ids, rejectedImgPoints = aruco.detectMarkers(img, aruco_dict, parameters=parameters)
     for i, marker_id in enumerate(ids):
-        #print(corners[i][0])
         x_coordinates = corners[i][0][:, 0]
         y_coordinates = corners[i][0][:, 1]
         min_x, max_x = np.min(x_coordinates)-size_marker, np.max(x_coordinates)+size_marker
         min_y, max_y = np.min(y_coordinates)-size_marker, np.max(y_coordinates)+size_marker
-        
+        print("-------------------", min_x, max_x, min_y, max_y)
         # Create a white square between specified coordinates
         mask = np.zeros_like(img, dtype=np.uint8)
         mask[int(min_y):int(max_y), int(min_x):int(max_x)] = 255
@@ -293,6 +306,7 @@ def get_obstacles_coordinates(img,pos_goal):
     y2=int(pos_goal[1]+size_marker)
     mask[y1:y2, x1:x2] = 255
     img_obstacles = cv2.bitwise_or(img_obstacles, mask)
+    cv2.imwrite('2_img_obstacles.jpg', img_obstacles)
     
     #reverse the image for the cv2.Canny()
     img_obstacles = cv2.bitwise_not(img_obstacles)
@@ -301,7 +315,7 @@ def get_obstacles_coordinates(img,pos_goal):
     blurred = cv2.GaussianBlur(img_obstacles, (9, 9), 0)
     # Apply edge detection
     edges = cv2.Canny(blurred, 150, 200)
-
+    cv2.imwrite('3_img_contours.jpg', img_obstacles)
     # Find contours in the image
     contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -337,10 +351,8 @@ def get_obstacles_coordinates(img,pos_goal):
             # Convert the resulting list to a NumPy array
             new_approx = np.array(new_approx)
             pos = [list(point[0]) for point in new_approx]
-            #pos = [tuple(point[0]) for point in new_approx]
             pos_obstacle.append(pos)
             
             for point in new_approx:
                 cv2.circle(img_obstacles, tuple(point[0]), 5, (0, 255, 0), -1)
-    #print("pos_obstacle :", pos_obstacle)
     return img_obstacles,pos_obstacle
