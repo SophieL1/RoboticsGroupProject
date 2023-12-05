@@ -25,6 +25,8 @@ def plot_map(obstacle_vertices, xAxeLim, yAxeLim ,larger=False, larger_obs=None,
             for vertex in obstacle:
                 plt.text(vertex[0], vertex[1], str(i), color='blue', fontsize=8, ha='right', va='bottom')
                 i = i+1
+
+
     
     if larger :
         for obstacle in larger_obs :
@@ -55,6 +57,9 @@ def plot_map(obstacle_vertices, xAxeLim, yAxeLim ,larger=False, larger_obs=None,
         plt.plot(x_start, y_start, 'b-')  # Plot start boundary
         plt.plot(x_start_mid, y_start_mid, 'bo') # Plot center point of Thymio robot
         
+        if graph :
+            plt.text(start_pt[0], start_pt[1], str(0), color='blue', fontsize=8, ha='right', va='bottom')
+        
     if goal is not None :
         x_goal = [vertex[0] for vertex in goal]
         y_goal = [vertex[1] for vertex in goal]
@@ -66,6 +71,9 @@ def plot_map(obstacle_vertices, xAxeLim, yAxeLim ,larger=False, larger_obs=None,
 
         plt.plot(x_goal, y_goal, 'y-')  # Plot goal boundary
         plt.plot(x_goal_mid, y_goal_mid, 'yo') # Plot center point of Thymio's goal
+        
+        if graph :
+            plt.text(x_goal_mid, y_goal_mid, str(i), color='blue', fontsize=8, ha='right', va='bottom')
 
     plt.xlabel('X-axis')
     plt.ylabel('Y-axis')
