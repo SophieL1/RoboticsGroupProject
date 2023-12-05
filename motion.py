@@ -6,24 +6,28 @@ import numpy as np
 #CONSTANTS
 SPEED = 100
 SPEED_ROT = 50
-SPEED_FACTOR =0.386 #0.45  #0.55 # 0.386  
+SPEED_FACTOR = 0.386 #0.45  #0.55 # 0.386  
 DISTANCE_BETWEEN_WHEELS = 93  #mm
 SENSOR_SCALE = 200
 MOTOR_SCALE = 20
 DISTANCE_TRESHOLD = 20
 ROTATION_TRESHOLD = 6
 KP = 1 #1.2
-#Tm = 0.2 #10 Hz (frequency at which the motors speed change)
+
+#ANN CONSTANTS
+WR = [-80,-80,-80,-40,60,0,0] #[-80,-80,-80,-40,40,80,40]
+WL = [60,-40,-80,-80,-80,0,0] #[40,-40,-80,-80,-80,40,80]
 
 class motion_state(IntEnum):
     FOLLOW_TRAJECTORY = 1
     ROTATION = 2
 
+
 ######INTERNAL FUNCTIONS ######
 
 #Convert the thymio speed to mm/s
 def conv_thymio_to_mms(thymio_speed):
-    speed_mms = thymio_speed*SPEED_FACTOR;
+    speed_mms = thymio_speed*SPEED_FACTOR
     return speed_mms
 
 def motors(left, right):
@@ -32,18 +36,17 @@ def motors(left, right):
         "motor.right.target": [right],
     }
 
+#Artificial neural network between the proximity sensors and the motors
 def avoid_obstacle(prox_horizontal):
-    Wr = [-40,-40,-40,-20,20,40,20]
-    Wl = [20,-20,-40,-40,-40,20,40]
     y = [0,0]
     x = [0,0,0,0,0,0,0]
     for i in range (len(x)):
         x[i]= prox_horizontal[i]//SENSOR_SCALE
-        y[0] = y[0]+Wl[i]*x[i]
-        y[1] = y[1]+Wr[i]*x[i]
+        y[0] = y[0]+WL[i]*x[i]
+        y[1] = y[1]+WR[i]*x[i]
    
-    corr_speed_l = y[0]//MOTOR_SCALE*2
-    corr_speed_r = y[1]//MOTOR_SCALE*2
+    corr_speed_l = y[0]//MOTOR_SCALE
+    corr_speed_r = y[1]//MOTOR_SCALE
     return corr_speed_l, corr_speed_r
 
 def p_controller(angle,angle_goal):
@@ -55,7 +58,8 @@ def p_controller(angle,angle_goal):
     #print("correction L,R : ", corr_l, corr_r)
     return corr_l, corr_r
 
-def follow_trajectory(prox_horizontal,angle_goal,angle): #peut être rajouter distance et angle en paramètre
+# Correction of the speed motors 
+def motors_correction(prox_horizontal,angle_goal,angle): 
     avoid_speed_l,avoid_speed_r = avoid_obstacle(prox_horizontal)
     p_corr_l, p_corr_r = p_controller(angle,angle_goal)
     speed_l = SPEED + avoid_speed_l + p_corr_l
@@ -64,7 +68,7 @@ def follow_trajectory(prox_horizontal,angle_goal,angle): #peut être rajouter di
     return speed_l,speed_r
 
 
-# position of the robot between each time intervals (distance in mm and angle in degrees)
+# Position of the robot between each time intervals (distance in mm and angle in degrees)
 def delta_pos(output_speed_l, output_speed_r,time_interval):
 
     l_speed_mms = conv_thymio_to_mms(output_speed_l)
@@ -80,9 +84,8 @@ def delta_pos(output_speed_l, output_speed_r,time_interval):
     #print("\t\t delta_distance : ",delta_distance)
     return delta_distance, delta_angle_deg
 
-
-def relative_pos(pos,pos_goal,idx):
-    #pos=[[x],[y],[angle]], pos_goal= [[x1,y1],(x2,y2),...]
+#Compute the distance and angle between the thymio position and the next trajectory point/position goal
+def relative_pos(pos,pos_goal,idx): #pos=[[x],[y],[angle]], pos_goal= [[x1,y1],(x2,y2),...]
     print("pos = ",pos)
     #pos = np.array(pos)
     pos_goal = np.array(pos_goal)
@@ -90,8 +93,9 @@ def relative_pos(pos,pos_goal,idx):
     relativ_dist = math.sqrt((pos_goal[idx,0] - pos[0,0])**2 + (pos_goal[idx,1]- pos[1,0])**2)
     return relativ_dist, pos[2,0]
 
+#Compute a list with the angle between each consecutive trajectory points (angle) and 
+#the angle between the robot position and the next trajectory point (angle_goal_live)
 def calcul_angle(trajectory_points, estimated_pos, index): #[(x1,y1),(x2,y2)]
-    dist = []
     angle = []
     for i in range(len(trajectory_points) - 1):
         dx = trajectory_points[i+1][0] - trajectory_points[i][0]
@@ -109,6 +113,7 @@ def calcul_angle(trajectory_points, estimated_pos, index): #[(x1,y1),(x2,y2)]
 
 
 ######PUBLIC FUNCTION####### 
+
 def motion(estimated_pos,pos_goal,prox_horizontal, Tm): # #real parameters:(estimate_pos,pos_goal,distance_goal,angle_goal)
     
     #local variables 
@@ -125,7 +130,6 @@ def motion(estimated_pos,pos_goal,prox_horizontal, Tm): # #real parameters:(esti
         motion.mot_state = motion_state.ROTATION
         
     #print("\t\t pos_goal: ",pos_goal)
-    #distance_goal,angle_goal = dist_angle_goal(pos_goal)
     angle_goal,angle_goal_live = calcul_angle(pos_goal, estimated_pos, motion.idx)
         
     if motion.idx<len(angle_goal):
@@ -149,15 +153,13 @@ def motion(estimated_pos,pos_goal,prox_horizontal, Tm): # #real parameters:(esti
                 
         # move from a point the following point given by the visibility map   
         if motion.mot_state == motion_state.FOLLOW_TRAJECTORY:
-            output_speed_l, output_speed_r = follow_trajectory(prox_horizontal, angle_goal_live, angle)
-            #distance_remaining = distance_goal[motion.idx]-distance
-            #if abs(distance_remaining) <= DISTANCE_TRESHOLD:
+            output_speed_l, output_speed_r = motors_correction(prox_horizontal, angle_goal_live, angle)
             if distance <= DISTANCE_TRESHOLD:
                 output_speed_l = 0 
                 output_speed_r = 0
                 #print("\t\t distance fin: ",distance)
                 motion.mot_state = motion_state.ROTATION
-                motion.idx += 1 ### 
+                motion.idx += 1  
                 
     else:
         output_speed_l = 0 
@@ -166,22 +168,7 @@ def motion(estimated_pos,pos_goal,prox_horizontal, Tm): # #real parameters:(esti
     #print("\t\t output speed L : ", output_speed_l)
     #print("\t\t output speed R : ", output_speed_r)
     delta_distance, delta_angle = delta_pos(output_speed_l, output_speed_r,Tm)
-    return output_speed_l, output_speed_r,delta_distance, delta_angle,end # vrai return: delta_distance, delta_angle,end
-
-
-#async def move(estimate_pos, node, client):
-    #distance_goal = [50, 30]
-    #angle_goal = [30, 50]
-        
-  #  await node.wait_for_variables({"prox.horizontal"})
-   # prox_horizontal = node['prox.horizontal']
-   # left_speed,right_speed,delta_distance,delta_angle,end=motion(prox_horizontal,distance,angle,distance_goal,angle_goal) 
-   # if end == True:
-   #     leds = {"leds.top": [0,32,0],}
-   #     await node.set_variables(leds)
-    
-  #  await node.set_variables(motors(left_speed, right_speed))
-   # await client.sleep(Tm)
+    return output_speed_l, output_speed_r,delta_distance, delta_angle,end 
     
     
     
