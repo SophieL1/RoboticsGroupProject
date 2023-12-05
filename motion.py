@@ -141,6 +141,10 @@ def motion(estimated_pos,pos_goal,prox_horizontal, Tm): # #real parameters:(esti
         #print("\t\t angle goal live: ",angle_goal_live)
         if motion.mot_state == motion_state.ROTATION:
             angle_rot = angle_goal[motion.idx]-angle
+            if angle_rot > 180:
+                angle_rot = angle_rot-360
+            elif angle_rot < -180:
+                angle_rot = angle_rot+360
             #print("\t\t angle_rot: ",angle_rot)
             if angle_rot<=0: #turn in counterclockwise
                 output_speed_l = -(SPEED_ROT) 
