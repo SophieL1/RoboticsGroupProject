@@ -6,7 +6,7 @@ import numpy as np
 #CONSTANTS
 SPEED = 100
 SPEED_ROT = 50
-SPEED_FACTOR = 0.386 #0.45  #0.55 # 0.386  
+SPEED_FACTOR = 0.378 
 DISTANCE_BETWEEN_WHEELS = 93  #mm
 SENSOR_SCALE = 200
 MOTOR_SCALE = 20
@@ -15,8 +15,8 @@ ROTATION_TRESHOLD = 6
 KP = 1 #1.2
 
 #ANN CONSTANTS
-WR = [-80,-80,-80,-40,60,0,0] #[-80,-80,-80,-40,40,80,40]
-WL = [60,-40,-80,-80,-80,0,0] #[40,-40,-80,-80,-80,40,80]
+WR = [-80,-80,-80,-40,60,0,0] 
+WL = [60,-40,-80,-80,-80,0,0] 
 
 class motion_state(IntEnum):
     FOLLOW_TRAJECTORY = 1
@@ -47,7 +47,6 @@ def avoid_obstacle(prox_horizontal):
    
     corr_speed_l = y[0]//MOTOR_SCALE
     corr_speed_r = y[1]//MOTOR_SCALE
-    print("\t\t corr obstacle : ",corr_speed_l, corr_speed_r)
     return corr_speed_l, corr_speed_r
 
 def p_controller(angle,angle_goal):
@@ -60,16 +59,14 @@ def p_controller(angle,angle_goal):
     corr_r =  KP*angle_error
     corr_l = int(corr_l)
     corr_r = int(corr_r)
-    print("\t\t correction PID : ", corr_l, corr_r)
     return corr_l, corr_r
 
-# Correction of the speed motors 
+# Correction of the motors speed
 def motors_correction(prox_horizontal,angle_goal,angle): 
     avoid_speed_l,avoid_speed_r = avoid_obstacle(prox_horizontal)
     p_corr_l, p_corr_r = p_controller(angle,angle_goal)
     speed_l = SPEED + avoid_speed_l + p_corr_l
     speed_r = SPEED + avoid_speed_r + p_corr_r
-    print("\t\t speed: ",speed_l,speed_r)
     return speed_l,speed_r
 
 
@@ -85,17 +82,12 @@ def delta_pos(output_speed_l, output_speed_r,time_interval):
     
     delta_angle = (-r_speed_mms+l_speed_mms) * time_interval / DISTANCE_BETWEEN_WHEELS
     delta_angle_deg = delta_angle*180/math.pi
-    #print("\t\t delta_angle_deg : ",delta_angle_deg)
-    #print("\t\t delta_distance : ",delta_distance)
     return delta_distance, delta_angle_deg
 
 #Compute the distance and angle between the thymio position and the next trajectory point/position goal
 def relative_pos(pos,pos_goal,idx): #pos=[[x],[y],[angle]], pos_goal= [[x1,y1],(x2,y2),...]
-    #print("pos = ",pos)
-    #pos = np.array(pos)
     pos_goal = np.array(pos_goal)
     idx = idx+1
-    #print("\t\t pos : ",pos)
     relativ_dist = math.sqrt((pos_goal[idx,0] - pos[0,0])**2 + (pos_goal[idx,1]- pos[1,0])**2)
     return relativ_dist, pos[2,0]
 
@@ -126,7 +118,7 @@ def normalize_angle(angle):
 
 ######PUBLIC FUNCTION####### 
 
-def motion(estimated_pos,pos_goal,prox_horizontal, Tm): # #real parameters:(estimate_pos,pos_goal,distance_goal,angle_goal)
+def motion(estimated_pos,pos_goal,prox_horizontal, Tm): 
     
     #local variables 
     output_speed_l=0 
@@ -141,26 +133,19 @@ def motion(estimated_pos,pos_goal,prox_horizontal, Tm): # #real parameters:(esti
         # If not, initialize mot_state to the state ROTATION
         motion.mot_state = motion_state.ROTATION
         
-    #print("\t\t pos_goal: ",pos_goal)
     angle_goal,angle_goal_live = calcul_angle(pos_goal, estimated_pos, motion.idx)
         
     if motion.idx<len(angle_goal):
-        
         distance,angle = relative_pos(estimated_pos,pos_goal,motion.idx)
-        print("-------------------------------------")
-        print("\t\t angle_goal: ",angle_goal[motion.idx])
-        print("\t\t distance: ",distance)
-        #print("\t\t angle: ",angle)
         angle = normalize_angle(angle)
-        print("\t\t angle: ",angle)
-        print("\t\t angle goal live: ",angle_goal_live)
+
+        #Rotate until the robot reach the direction of the next trajectory point/position goal
         if motion.mot_state == motion_state.ROTATION:
             angle_rot = angle_goal[motion.idx]-angle
             if angle_rot > 180:
                 angle_rot = angle_rot-360
             elif angle_rot < -180:
                 angle_rot = angle_rot+360
-            print("\t\t angle_rot: ",angle_rot)
             if angle_rot<=0: #turn in counterclockwise
                 output_speed_l = -(SPEED_ROT) 
                 output_speed_r = SPEED_ROT
@@ -169,14 +154,13 @@ def motion(estimated_pos,pos_goal,prox_horizontal, Tm): # #real parameters:(esti
                 output_speed_r = -(SPEED_ROT)
             if abs(angle_rot)<ROTATION_TRESHOLD:
                 motion.mot_state = motion_state.FOLLOW_TRAJECTORY
-                
-        # move from a point the following point given by the visibility map   
+
+        #Move from a point the following point given by the visibility map   
         if motion.mot_state == motion_state.FOLLOW_TRAJECTORY:
             output_speed_l, output_speed_r = motors_correction(prox_horizontal, angle_goal_live, angle)
             if distance <= DISTANCE_TRESHOLD:
                 output_speed_l = 0 
                 output_speed_r = 0
-                #print("\t\t distance fin: ",distance)
                 motion.mot_state = motion_state.ROTATION
                 motion.idx += 1  
                 
@@ -184,9 +168,9 @@ def motion(estimated_pos,pos_goal,prox_horizontal, Tm): # #real parameters:(esti
         output_speed_l = 0 
         output_speed_r = 0
         end = True
-    #print("\t\t output speed L : ", output_speed_l)
-    #print("\t\t output speed R : ", output_speed_r)
+
     delta_distance, delta_angle = delta_pos(output_speed_l, output_speed_r,Tm)
+    
     return output_speed_l, output_speed_r,delta_distance, delta_angle,end 
     
     
