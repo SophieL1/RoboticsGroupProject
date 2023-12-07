@@ -49,19 +49,7 @@ def visual_img(img_croped, my_coordinates, expanded_obs, init_pos, pos_thymio, e
     y = int(estimated_pos[1])
     alpha = int(estimated_pos[2])
 
-    # Calculate ellipse parameters
-    """lambda_, v = np.linalg.eig(P[0:2, 0:2])
-    lambda_ = np.sqrt(lambda_)
-    lambda_ = np.nan_to_num(lambda_, nan=1.0)
-    angle = np.rad2deg(np.arctan2(*v[:,0][::-1]))
-
-    # Scale the ellipse size to be visible
-    scale_factor = 30
-    width = int(lambda_[0] * 2 * scale_factor)
-    height = int(lambda_[1] * 2 * scale_factor)"""
-
     # Draw the filter and the estimated point
-    #cv2.ellipse(img_croped, (x, y), (width, height), angle, 0, 360, (255, 0, 0), 2)
     cv2.ellipse(img_croped, (x, y), (10*abs(int(P[0][0])), 10*abs(int(P[1][1]))), 0, 0, 360, (255, 0, 0), 2)
     cv2.circle(img_croped, (x, y), radius=4, color=(0, 0, 255), thickness=-1)
 
@@ -125,31 +113,24 @@ def find_goal(gray_image):
     params = cv2.SimpleBlobDetector_Params()
 
     # Change thresholds
-    #params.minThreshold = 10
-    #params.maxThreshold = 200
     params.minThreshold = 10
     params.maxThreshold = 200
 
     # Filter by Area.
     params.filterByArea = True
-    #params.minArea = 500
-    #params.maxArea = 2000
     params.minArea = 1000
     params.maxArea = 2000
 
     # Filter by Circularity
     params.filterByCircularity = True
-    #params.minCircularity = 0.9
     params.minCircularity = 0.8
 
     # Filter by Convexity
     params.filterByConvexity = True
-    #params.minConvexity = 0.9
     params.minConvexity = 0.8
 
     # Filter by Inertia3
     params.filterByInertia = True
-    #params.minInertiaRatio = 0.7
     params.minInertiaRatio = 0.6
     
     # Create a blob detector with the specified parameters
@@ -253,12 +234,6 @@ def get_position_orientation_thymio(img):
     
     # Return None if Thymio marker is not found
     return None
-
-
-
-
-
-
 
 
 
