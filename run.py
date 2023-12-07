@@ -47,4 +47,3 @@ async def run(x_init, expanded_obs, trajectory_points, cam, corner_coordinates,n
             cam.release()
             cv2.destroyAllWindows()
             break    
-    await(node.unlock())
