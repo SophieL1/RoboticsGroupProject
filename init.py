@@ -44,9 +44,6 @@ def init():
                         img_obstacles,pos_obstacle = get_obstacles_coordinates(img_crop,pos_goal) #get coordinates of the obstacles
                         pos_thymio = get_position_orientation_thymio(img_crop) #get position of thymio
                         first_time = False
-                        print("pos_goal : ", pos_goal)
-                        print("pos_obstacle : ",pos_obstacle)
-                        print("pos_thymio : ",pos_thymio)
                         robot_dir0 = pos_thymio[2]
                         width = 60
                         width_goal = 50
