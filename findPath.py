@@ -34,27 +34,29 @@ def findPath(obs_list, start_point, robot_dir0, goal_point, width, width_goal, t
         
     # Expand obstacles (ideally by at least half of Thymio robot's width)
     expanded_obs = expand_obstacles(obs_list, width) # expanded_obs is now a list of #obs lists of #verticesofthisobs tuples
-    if verbose :
-        print('Schematic map with expanded obstacles :')
-        plot_map(obs_list, xLimMap, yLimMap, True, expanded_obs, start=start_pos, start_pt=start_point, goal=goal_pos)
+    
+    # even if not verbose, we'll print this map to illustrate
+    print('Schematic map with expanded obstacles :')
+    plot_map(obs_list, xLimMap, yLimMap, True, expanded_obs, start=start_pos, start_pt=start_point, goal=goal_pos)
     
     myNodes, myVertices, mySides = get_nodes_and_sides(expanded_obs, start_point, goal_point)
      
     
     myEdges, myWeights = get_edges_and_weights(myNodes, myVertices, mySides, verbose=verbose)
     
-    if verbose :
-        print("Map with visibility visualisation :\n (violet lines show visibility relations)")
-        plot_map(expanded_obs, xLimMap, yLimMap, larger=False, larger_obs=None, 
-             start=start_pos, start_pt=start_point, goal=goal_pos,
-             graph=True, graph_edges=myEdges, vertices=myVertices)
+    # even if not verbose, we'll print this map because it's interesting
+    print("Map with visibility visualisation :\n (violet lines show visibility relations)")
+    plot_map(expanded_obs, xLimMap, yLimMap, larger=False, larger_obs=None, 
+         start=start_pos, start_pt=start_point, goal=goal_pos,
+         graph=True, graph_edges=myEdges, vertices=myVertices)
     
     myGraph = create_graph(myNodes, myEdges, myWeights, verbose=verbose)
     
     goal_idx = myNodes[-1][0]
     myPath = nx.dijkstra_path(myGraph, 0, goal_idx, weight='weight')
-    if verbose :
-        print('Path nodes :', myPath)
+    
+    # even if not verbose, we'll print the path
+    print('Path nodes :', myPath)
         
     # Getting coordinates of the points we want to go through
     myCoordinates = get_wheretogo_coordinates(myPath, myVertices)
